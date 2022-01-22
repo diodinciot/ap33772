@@ -79,76 +79,73 @@ echo "#########################################################################"
 echo Start requesting PDOs
 echo 
 
-# Now start looping the DPO until break (Ctrl-C) is detected.
-while [ 1 ]
-do
-	# Reqest PDO in alternating incremental and decremental orders
-	for i in $(eval echo {0..$(($ValidPDOCnt-2))} {$(($ValidPDOCnt-1))..1})
-	do
+read -p 'Enter PDO ID: ' PDONUM
+i=$(($PDONUM-1))
 		
-		TotalCnt=$(($TotalCnt + 1))
-		
-		# Reset RDO
-		RDO=0x00000000
+# Reset RDO
+RDO=0x00000000
 
-		# Process RDO based on different APDO/FixedPDO formats
-		if [ ${PDO[$i, 0]} != "APDO" ]
-		then
-			# This is a fixed PDO, 
-			# Set bit30..28 to position value
-			RDO=$(($RDO | ((0x7 & ($i + 1)) << 28)))
-			# Set Operating Current in 10mA units, bit19..10
-			RDO=$(($RDO | ((${PDO[$i, 2]} / 10) << 10)))
-			# Set Max Operating Current in 10mA units, bit9..0
-			RDO=$(($RDO | ((${PDO[$i, 2]} / 10) << 0)))
-			#printf "0x%.4x\n\n" $RDO
-		else
-			# This is a APDO, 
-			# Set bit30..28 to position value
-			RDO=$(($RDO | ((0x7 & ($i + 1)) << 28)))
-			# Set Output Voltage in 20mV units, bit19..9
-			RDO=$(($RDO | ((${PDO[$i, 1]} / 20) << 9)))
-			#RDO=$(($RDO | ((15000 / 20) << 9)))
-			# Set Operating Current in 50mA units, bit6..0
-			RDO=$(($RDO | ((${PDO[$i, 2]} / 50) << 0)))
-			#RDO=$(($RDO | ((3000 / 50) << 0)))
-			#printf "0x%.4x\n\n" $RDO
-		fi
+# Process RDO based on different APDO/FixedPDO formats
+if [ ${PDO[$i, 0]} != "APDO" ]
+then
+	# This is a fixed PDO, 
+	# Set bit30..28 to position value
+	RDO=$(($RDO | ((0x7 & ($i + 1)) << 28)))
+	# Set Operating Current in 10mA units, bit19..10
+	RDO=$(($RDO | ((${PDO[$i, 2]} / 10) << 10)))
+	# Set Max Operating Current in 10mA units, bit9..0
+	RDO=$(($RDO | ((${PDO[$i, 2]} / 10) << 0)))
+	#printf "0x%.4x\n\n" $RDO
+	printf "Requesting PDO%d: Fixed PDO: V=%dmV I=%dmA\n" $(($i+1)) $((PDO[$i, 1])) $((PDO[$i, 2]))
+else
+	# This is a APDO, 
+	# Set bit30..28 to position value
+	RDO=$(($RDO | ((0x7 & ($i + 1)) << 28)))
+	# Set Output Voltage in 20mV units, bit19..9
+	read -p 'Enter output voltage(mV) for APDO: ' APDOVOLT
+	PDO[$i, 1]=$APDOVOLT
+	#echo VOLT11bits=${PDO[$i, 1]}
+	RDO=$(($RDO | (((${PDO[$i, 1]} / 20)&0x7ff) << 9)))
+	# Set Operating Current in 50mA units, bit6..0
+	read -p 'Enter output current(mA) for APDO: ' APDOCURR
+	PDO[$i, 2]=$APDOCURR
+	RDO=$(($RDO | (((${PDO[$i, 2]} / 50)&0x7f) << 0)))
+	#printf "0x%.4x\n\n" $RDO
+	printf "Requesting PDO%d: APDO V=%dmV I=%dmA\n" $(($i+1)) $((PDO[$i, 1])) $((PDO[$i, 2]))
+fi
 
-		# Generate RDO by writing 4 bytes RDO information starting from address 0x30
-		#echo -n set to PDO$(($i++1)) cnt=$cnt" "
-		#printf "i2cset -y %d 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x %s\n" $RPI_I2CBUS $I2C_ADDR 0x30 $((($RDO>>0) & 0xff)) $((($RDO>>8) & 0xff)) $((($RDO>>16) & 0xff)) $(((RDO>>24) & 0xff)) "i" 
-		i2cset -y $RPI_I2CBUS $I2C_ADDR 0x30 $((($RDO>>0) & 0xff)) $((($RDO>>8) & 0xff)) $((($RDO>>16) & 0xff)) $(((RDO>>24) & 0xff)) i 
-		if [ $? != 0 ]
-		then
-			NackCnt=$(($NackCnt + 1))	
-		fi
-		sleep $sleeptime # Need some sleeptime for block read/write
+# Generate RDO by writing 4 bytes RDO information starting from address 0x30
+#echo -n set to PDO$(($i++1)) cnt=$cnt" "
+#printf "i2cset -y %d 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x 0x%.2x %s\n" $RPI_I2CBUS $I2C_ADDR 0x30 $((($RDO>>0) & 0xff)) $((($RDO>>8) & 0xff)) $((($RDO>>16) & 0xff)) $(((RDO>>24) & 0xff)) "i" 
+i2cset -y $RPI_I2CBUS $I2C_ADDR 0x30 $((($RDO>>0) & 0xff)) $((($RDO>>8) & 0xff)) $((($RDO>>16) & 0xff)) $(((RDO>>24) & 0xff)) i 
+if [ $? != 0 ]
+then
+	NackCnt=$(($NackCnt + 1))	
+fi
+sleep $sleeptime # Need some sleeptime for block read/write
 
-		# Check if RDO got granted.
-                status=`i2cget -y 1 0x51 0x1d`
-                if [ "$status" != "" ]
-                then
-                        accept=$(($status & 0x02))
-                fi
-                if [ $accept == 0 ]
-                then
-                        RejCnt=$(($RejCnt + 1))
-                fi
+# Check if RDO got granted.
+status=`i2cget -y 1 0x51 0x1d`
+if [ "$status" != "" ]
+then
+	accept=$(($status & 0x02))
+fi
+if [ $accept == 0 ]
+then
+	RejCnt=$(($ReJcnt + 1))
+fi
 
-		#sleep $sleeptime
-		voltage=$((`i2cget -y $RPI_I2CBUS $I2C_ADDR 0x20` * 80))
-		#echo -n voltage=${voltage}mV" "
+#sleep $sleeptime
+voltage=$((`i2cget -y $RPI_I2CBUS $I2C_ADDR 0x20` * 80))
+#echo -n voltage=${voltage}mV" "
 
-		#sleep $sleeptime
-		current=$((`i2cget -y $RPI_I2CBUS $I2C_ADDR 0x21` * 24))
-		#echo -n voltage=${voltage}mA" "
+#sleep $sleeptime
+current=$((`i2cget -y $RPI_I2CBUS $I2C_ADDR 0x21` * 24))
+#echo -n voltage=${voltage}mA" "
 
-		#sleep $sleeptime
-		temp=`i2cget -y 1 0x51 0x22`
-		printf "PDO%d: \tTotal=%-6d NackCnt=%-3d  status=0x%.2x\tRejCnt=%-3d   V=%dmV\tI=%dmA\tT=%dC\n" $(($i+1)) $TotalCnt $NackCnt $status $RejCnt $voltage $current $temp
+#sleep $sleeptime
+temp=`i2cget -y 1 0x51 0x22`
+printf "PDO%d: \tNackCnt=%-3d  status=0x%.2x\tRejCnt=%-3d   V=%dmV\tI=%dmA\tT=%dC\n" $(($i+1)) $NackCnt $status $RejCnt $voltage $current $temp
 
-		#sleep $sleeptime
-	done
-done
+#sleep $sleeptime
 

@@ -148,25 +148,30 @@ try:
 	print("")
 
 	# RDO submission
-	while True:
-		for i in list(range(ValidPDOCnt-1))+list(reversed(range(1, ValidPDOCnt))):
-			cmdcnt=cmdcnt+1
-			# Request PDO from 0x30~0x33
-			i2c.write_i2c_block_data(I2C_ADDR, 0x30, [(rdolist[i].word>>0)&0xff, (rdolist[i].word>>8)&0xff, (rdolist[i].word>>16)&0xff, (rdolist[i].word>>24)&0xff])
-			sleep(0.3)
-			status = i2c.read_byte_data(I2C_ADDR, 0x1d)
-			if (status & 0x02) != 0x02:
-				rejcnt=rejcnt+1
-			voltage = i2c.read_byte_data(I2C_ADDR, 0x20) * 80
-			current = i2c.read_byte_data(I2C_ADDR, 0x21) * 24
-			temperature = i2c.read_byte_data(I2C_ADDR, 0x22)
-			print("PDO%d:\tTotal:%-3d\tstatus:0x%.2x\tRejects=%d\tV=%dmV\tI=%dmA\tT=%dC" %((i+1), cmdcnt, status, rejcnt, voltage, current, temperature))
 
-			#sleep(0.3)
+	pdoid=input("Enter PDO ID: ")
+	i=int(pdoid)-1
+	cmdcnt=cmdcnt+1
 
-	# The following command will never be reached due to "while True" command! Actually object closure is done in except condition.
-	i2c.close()	
-    
+	if rdolist[i].pdotype == "APDO":
+		apdovolt=input("Enter voltage(mV) for APDO: ")
+		apdocurr=input("Enter current(mA) for APDO: ")
+		rdolist[i].RpoOpVolt=int(apdovolt)
+		rdolist[i].RpoMaxOpCurr=int(apdocurr)
+		rdolist[p.id-1].word = ((p.id & 0x7) << 28) | (int(rdolist[p.id-1].RpoOpVolt/20)<<9 ) | (int(rdolist[p.id-1].RpoMaxOpCurr/50)<<0)
+
+	# Request PDO from 0x30~0x33
+	i2c.write_i2c_block_data(I2C_ADDR, 0x30, [(rdolist[i].word>>0)&0xff, (rdolist[i].word>>8)&0xff, (rdolist[i].word>>16)&0xff, (rdolist[i].word>>24)&0xff])
+	sleep(0.3)
+	status = i2c.read_byte_data(I2C_ADDR, 0x1d)
+	if (status & 0x02) != 0x02:
+		rejcnt=rejcnt+1
+	voltage = i2c.read_byte_data(I2C_ADDR, 0x20) * 80
+	current = i2c.read_byte_data(I2C_ADDR, 0x21) * 24
+	temperature = i2c.read_byte_data(I2C_ADDR, 0x22)
+	print("PDO%d:\tstatus:0x%.2x\tRejects=%d\tV=%dmV\tI=%dmA\tT=%dC" %((i+1), status, rejcnt, voltage, current, temperature))
+
+
 except KeyboardInterrupt:
 	# If there is a KeyboardInterrupt (when you press ctrl+c), exit the program and cleanup
 	print("Break detected!")
