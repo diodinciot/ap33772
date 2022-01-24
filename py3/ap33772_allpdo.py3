@@ -153,7 +153,7 @@ try:
 			cmdcnt=cmdcnt+1
 			# Request PDO from 0x30~0x33
 			i2c.write_i2c_block_data(I2C_ADDR, 0x30, [(rdolist[i].word>>0)&0xff, (rdolist[i].word>>8)&0xff, (rdolist[i].word>>16)&0xff, (rdolist[i].word>>24)&0xff])
-			sleep(0.3)
+			sleep(0.5)
 			status = i2c.read_byte_data(I2C_ADDR, 0x1d)
 			if (status & 0x02) != 0x02:
 				rejcnt=rejcnt+1
