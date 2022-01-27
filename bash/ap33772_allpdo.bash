@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# This program reports all PDO information and walks through all PDOs in up and down manner
+
 RPI_I2CBUS=1    # Using Raspberry Pi I2C_1
 I2C_ADDR=0x51   # I2C address 0x51
 PDO_ADDR=0x00   # PDO address range 0x00 ~ 0x1b, Starting at 0x00, max is 7 PDOs

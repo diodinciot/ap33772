@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# This program reports all PDO information and sends out RDO specified by user
+
 RPI_I2CBUS=1    # Using Raspberry Pi I2C_1
 I2C_ADDR=0x51   # I2C address 0x51
 PDO_ADDR=0x00   # PDO address range 0x00 ~ 0x1b, Starting at 0x00, max is 7 PDOs
@@ -95,7 +98,7 @@ then
 	RDO=$(($RDO | ((${PDO[$i, 2]} / 10) << 10)))
 	# Set Max Operating Current in 10mA units, bit9..0
 	RDO=$(($RDO | ((${PDO[$i, 2]} / 10) << 0)))
-	#printf "0x%.4x\n\n" $RDO
+	printf "0x%.4x\n\n" $RDO
 	printf "Requesting PDO%d: Fixed PDO: V=%dmV I=%dmA\n" $(($i+1)) $((PDO[$i, 1])) $((PDO[$i, 2]))
 else
 	# This is a APDO, 
@@ -110,7 +113,7 @@ else
 	read -p 'Enter output current(mA) for APDO: ' APDOCURR
 	PDO[$i, 2]=$APDOCURR
 	RDO=$(($RDO | (((${PDO[$i, 2]} / 50)&0x7f) << 0)))
-	#printf "0x%.4x\n\n" $RDO
+	printf "0x%.4x\n\n" $RDO
 	printf "Requesting PDO%d: APDO V=%dmV I=%dmA\n" $(($i+1)) $((PDO[$i, 1])) $((PDO[$i, 2]))
 fi
 
