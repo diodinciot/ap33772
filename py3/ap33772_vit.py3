@@ -14,7 +14,7 @@ try:
 	i2c=SMBus(RPI_I2CBUS)
 
 	# Dummy write command to flush out unfinished I2C traffic
-	i2c.write_i2c_block_data(I2C_ADDR, 0x30, [0x2c, 0xb1, 0x04, 0x10])
+	#i2c.write_i2c_block_data(I2C_ADDR, 0x30, [0x2c, 0xb1, 0x04, 0x10])
 
 	#print("#########################################################################")
 	# Read voltage addr 0x20, LSB=80mV

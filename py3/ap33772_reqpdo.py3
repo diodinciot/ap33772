@@ -65,7 +65,7 @@ try:
 			#print("PDO ID:%d  0x%.8x" %(i, p))
 			ValidPDOCnt+=1
 
-			IS_APDO=((p.word & 0xc0000000)==0xc0000000) 	# APDO bit 31..32 is 0b11
+			IS_APDO=((p.word & 0xc0000000)==0xc0000000) 	# APDO bit 31..30 is 0b11
 			if IS_APDO:
 				print("PDO ID:%d\nPDO=0x%.8x is a APDO" %(i+1, p.word))
 				p.pdotype="APDO"
@@ -136,7 +136,7 @@ try:
 		apdocurr=input("Enter current(mA) for APDO: ")
 		rdolist[i].RpoOpVolt=int(apdovolt)
 		rdolist[i].RpoMaxOpCurr=int(apdocurr)
-		rdolist[p.id-1].word = ((p.id & 0x7) << 28) | (int(rdolist[p.id-1].RpoOpVolt/20)<<9 ) | (int(rdolist[p.id-1].RpoMaxOpCurr/50)<<0)
+		rdolist[i].word = ((rdolist[i].id & 0x7) << 28) | (int(rdolist[i].RpoOpVolt/20)<<9 ) | (int(rdolist[i].RpoMaxOpCurr/50)<<0)
 
 	# Request PDO from 0x30~0x33
 	i2c.write_i2c_block_data(I2C_ADDR, 0x30, [(rdolist[i].word>>0)&0xff, (rdolist[i].word>>8)&0xff, (rdolist[i].word>>16)&0xff, (rdolist[i].word>>24)&0xff])

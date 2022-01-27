@@ -65,7 +65,7 @@ try:
 			#print("PDO ID:%d  0x%.8x" %(i, p))
 			ValidPDOCnt+=1
 
-			IS_APDO=((p.word & 0xc0000000)==0xc0000000) 	# APDO bit 31..32 is 0b11
+			IS_APDO=((p.word & 0xc0000000)==0xc0000000) 	# APDO bit 31..30 is 0b11
 			if IS_APDO:
 				print("PDO ID:%d\nPDO=0x%.8x is a APDO" %(i+1, p.word))
 				p.pdotype="APDO"
