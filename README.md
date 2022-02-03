@@ -1,8 +1,8 @@
 # ap33772 interface examples using Raspberry Pi
 
-There are 2 diffferent types of example: Python and Bash Scripts
+There are two different types of example: Python and Bash Scripts
 
-Each has 4 programs/scripts:
+Each has 4 programs/scripts except for the PPS one:
 
 1. ap33772_querypdo: This program reports all PDO information
 
