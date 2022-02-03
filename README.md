@@ -12,5 +12,5 @@ Each has 4 programs/scripts:
 
 4. ap33772_vit: This program reports voltage, current, and temperature information
 
-
+5. ap33772_pps.py3 (Python only): This program reports all PDO information and walks through all PPS voltage steps in up and down manner
 

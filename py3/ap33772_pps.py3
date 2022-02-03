@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# This program reports all PDO information
+# This program reports all PDO information and ramps up/down APDO's PPS steps
 
 from smbus2 import SMBus
 from time import sleep
@@ -92,6 +92,84 @@ try:
 	for p in pdolist:
 		p.display()
 
+
+	# Preparing RDO for later request
+	rdolist=list()
+	for p in pdolist:
+		r=Rdo()
+		rdolist.append(r)
+		r.id=p.id
+		r.pdotype=p.pdotype
+		if p.pdotype == "FPDO":	# This is Fixed PDO
+			r.RpoOpCurr=p.MaxCurr
+			r.RpoMaxOpCurr=p.MaxCurr
+			# Set position value bit30..28 
+			# Set Operating Current in 10mA units, bit19..10
+			# Set Max Operating Current in 10mA units, bit9..0
+			r.word = ((r.id & 0x7) << 28) | (int(r.RpoOpCurr/10)<<10 ) | (int(r.RpoMaxOpCurr/10)<<0)
+		else:			# This is APDO
+			r.RpoOpVolt=p.MaxVolt
+			r.RpoOpCurr=p.MaxCurr
+			# Set position value bit30..28 
+			# Set Output Voltage in 20mV units, bit19..9
+                        # Set Operating Current in 50mA units, bit6..0
+			r.word = ((r.id & 0x7) << 28) | (int(r.RpoOpVolt/20)<<9 ) | (int(r.RpoMaxOpCurr/50)<<0)
+
+	# Print all RDO out
+	print("RDO List:")
+	for p in rdolist:
+		p.display()
+
+	print("#########################################################################")
+	print("Start requesting PDOs: PPS")
+	print("")
+
+	# RDO submission
+	cmdcnt=0
+	rejcnt=0
+
+	#pdoid=input("Enter PDO ID: ")
+	# Search through all PDO for APDO. The last APDO will be used.
+	for p in rdolist:
+		if p.pdotype == "APDO":
+			pdoid = p.id
+
+	i=int(pdoid)-1
+	apdovolt=pdolist[i].MinVolt
+	increment=1
+
+	while True:
+		cmdcnt=cmdcnt+1
+	
+		if rdolist[i].pdotype == "APDO":
+			#apdovolt=input("Enter voltage(mV) for APDO: ")
+			#apdocurr=input("Enter current(mA) for APDO: ")
+			rdolist[i].RpoOpVolt=int(apdovolt)
+			#rdolist[i].RpoMaxOpCurr=int(apdocurr)
+			rdolist[i].word = ((rdolist[i].id & 0x7) << 28) | (int(rdolist[i].RpoOpVolt/20)<<9 ) | (int(rdolist[i].RpoMaxOpCurr/50)<<0)
+	
+		# Request PDO from 0x30~0x33
+		i2c.write_i2c_block_data(I2C_ADDR, 0x30, [(rdolist[i].word>>0)&0xff, (rdolist[i].word>>8)&0xff, (rdolist[i].word>>16)&0xff, (rdolist[i].word>>24)&0xff])
+		sleep(0.3)
+		status = i2c.read_byte_data(I2C_ADDR, 0x1d)
+		if (status & 0x02) != 0x02:
+			rejcnt=rejcnt+1
+		voltage = i2c.read_byte_data(I2C_ADDR, 0x20) * 80
+		current = i2c.read_byte_data(I2C_ADDR, 0x21) * 24
+		temperature = i2c.read_byte_data(I2C_ADDR, 0x22)
+		print("PDO%d:%dmV\tTotal:%-3d\tstatus:0x%.2x\tRejects=%d\tV=%dmV\tI=%dmA\tT=%dC" %((i+1), apdovolt, cmdcnt, status, rejcnt, voltage, current, temperature))
+		if increment and (apdovolt >= pdolist[i].MaxVolt):
+			apdovolt = pdolist[i].MaxVolt
+			increment = 0
+		elif not increment and (apdovolt <= pdolist[i].MinVolt):
+			apdovolt = pdolist[i].MinVolt
+			increment = 1
+
+		if increment:
+			apdovolt = apdovolt + 50
+		else:	
+			apdovolt = apdovolt - 50
+	
 	# The following command will never be reached due to "while True" command! Actually object closure is done in except condition.
 	i2c.close()	
     
