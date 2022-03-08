@@ -28,5 +28,9 @@ try:
     
 except KeyboardInterrupt:
 	# If there is a KeyboardInterrupt (when you press ctrl+c), exit the program and cleanup
-	print("Break detected!")
-	i2c.close()
+	print("Break detected! Shut down AP33772")
+	if i2c:
+		# Disable ap33772
+		i2c.write_i2c_block_data(I2C_ADDR, 0x30, [0x00, 0x00, 0x00, 0x00])
+		i2c.write_i2c_block_data(I2C_ADDR, 0x30, [0x00, 0x00, 0x00, 0x00])
+		i2c.close()

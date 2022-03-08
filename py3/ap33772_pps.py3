@@ -43,9 +43,13 @@ class Rdo:
 try:
 	# Create i2c object
 	i2c=SMBus(RPI_I2CBUS)
-	# Dummy write command to flush out unfinished I2C traffic
-	#i2c.write_i2c_block_data(I2C_ADDR, 0x30, [0x2c, 0xb1, 0x04, 0x10])
+	# Write a reset to start from scratch
+	i2c.write_i2c_block_data(I2C_ADDR, 0x30, [0x00, 0x00, 0x00, 0x00])
 	# Read all 28-Byte PDO information
+	while True:
+		status=i2c.read_byte_data(I2C_ADDR, 0x1d)
+		if (status & 0x05)==0x05:
+			break
 	pdo28b=i2c.read_i2c_block_data(I2C_ADDR, 0x00, 28)
 
 	# Build PDO objects based on the first 28-byte data
@@ -175,6 +179,9 @@ try:
     
 except KeyboardInterrupt:
 	# If there is a KeyboardInterrupt (when you press ctrl+c), exit the program and cleanup
-	print("Break detected!")
+	print("Break detected! Shut down AP33772")
 	if i2c:
+		# Disable ap33772
+		i2c.write_i2c_block_data(I2C_ADDR, 0x30, [0x00, 0x00, 0x00, 0x00])
+		i2c.write_i2c_block_data(I2C_ADDR, 0x30, [0x00, 0x00, 0x00, 0x00])
 		i2c.close()
