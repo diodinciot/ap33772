@@ -2,7 +2,7 @@
 
 There are two different types of example: Python and Bash Scripts
 
-Each has 4 programs/scripts except for the PPS one:
+Each has 5 programs/scripts except for the PPS one:
 
 1. ap33772_querypdo: This program reports all PDO information
 
