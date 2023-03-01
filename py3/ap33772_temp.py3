@@ -7,7 +7,6 @@ from time import sleep
 
 RPI_I2CBUS=1	# Using Raspberry Pi I2C_1
 I2C_ADDR=0x51	# I2C address 0x51
-PDO_ADDR=0x00	# PDO address range 0x00 ~ 0x1b, Starting at 0x00, max is 7 PDOs
 
 try:
 	# Create i2c object
@@ -26,6 +25,8 @@ try:
 		temperature = i2c.read_byte_data(I2C_ADDR, 0x22)
 		#print("voltage=%dmV\tcurrent=%dmA\ttemperature=%dC" %(voltage, current, temperature))
 		print("temperature=%dC" %(temperature))
+		sleep(0.5)
+
 	i2c.close()
     
 except KeyboardInterrupt:

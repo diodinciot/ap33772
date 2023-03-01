@@ -57,7 +57,6 @@ try:
 	ValidPDOCnt=0	# reset Valid PDO count
 	for i in range(0, len(pdo28b), 4):
 		p = Pdo()
-		pdolist.append(p)
 		p.id = int(i/4) + 1
 		p.word = 0
 		for j in range(4):
@@ -67,6 +66,7 @@ try:
 		IS_VALID_PDO=(p.word != 0x00000000)  
 		if IS_VALID_PDO:
 			#print("PDO ID:%d  0x%.8x" %(p.id, p))
+			pdolist.append(p)
 			ValidPDOCnt+=1
 
 			IS_APDO=((p.word & 0xc0000000)==0xc0000000) 	# APDO bit 31..30 is 0b11
@@ -86,10 +86,6 @@ try:
 
 	print("Total %d valid PDOs are detected!" %(ValidPDOCnt))
 	sleep(1.0)
-
-	# Delete unused PDOs
-	for i in range(ValidPDOCnt, 7):
-		pdolist.pop(-1)
 
 	# Print all PDO out
 	print("PDO List:")
