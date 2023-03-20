@@ -113,7 +113,7 @@ try:
 			# Set position value bit30..28 
 			# Set Output Voltage in 20mV units, bit19..9
                         # Set Operating Current in 50mA units, bit6..0
-			r.word = ((r.id & 0x7) << 28) | (int(r.RpoOpVolt/20)<<9 ) | (int(r.RpoMaxOpCurr/50)<<0)
+			r.word = ((r.id & 0x7) << 28) | (int(r.RpoOpVolt/20)<<9 ) | (int(r.RpoOpCurr/50)<<0)
 		rdolist.append(r)
 
 	# Print all RDO out

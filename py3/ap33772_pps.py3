@@ -113,7 +113,7 @@ try:
 			# Set position value bit30..28 
 			# Set Output Voltage in 20mV units, bit19..9
                         # Set Operating Current in 50mA units, bit6..0
-			r.word = ((r.id & 0x7) << 28) | (int(r.RpoOpVolt/20)<<9 ) | (int(r.RpoMaxOpCurr/50)<<0)
+			r.word = ((r.id & 0x7) << 28) | (int(r.RpoOpVolt/20)<<9 ) | (int(r.RpoOpCurr/50)<<0)
 		rdolist.append(r)
 
 	# Print all RDO out
@@ -147,7 +147,7 @@ try:
 			#apdocurr=input("Enter current(mA) for APDO: ")
 			rdolist[i].RpoOpVolt=int(apdovolt)
 			#rdolist[i].RpoMaxOpCurr=int(apdocurr)
-			rdolist[i].word = ((rdolist[i].id & 0x7) << 28) | (int(rdolist[i].RpoOpVolt/20)<<9 ) | (int(rdolist[i].RpoMaxOpCurr/50)<<0)
+			rdolist[i].word = ((rdolist[i].id & 0x7) << 28) | (int(rdolist[i].RpoOpVolt/20)<<9 ) | (int(rdolist[i].RpoOpCurr/50)<<0)
 	
 		# Request PDO from 0x30~0x33
 		i2c.write_i2c_block_data(I2C_ADDR, 0x30, [(rdolist[i].word>>0)&0xff, (rdolist[i].word>>8)&0xff, (rdolist[i].word>>16)&0xff, (rdolist[i].word>>24)&0xff])
